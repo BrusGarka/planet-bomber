@@ -37,13 +37,15 @@ export const CONFIG = Object.freeze({
   EXPLOSION_LIFE_MS: 520,
 
   // Órbita satélite (ângulos em radianos)
-  CAM_ALT: 4.0,
-  CAM_ANGULAR_BACK: 0.42,
-  CAM_ANGULAR_ELEV: 0.28,
-  CAM_LOOK_AHEAD: 0.15,
-  CAM_LOOK_DOWN: 0.12,
+  // Posição no meridiano (ELEV=0). lookAt(origem) → disco centrado L–R.
+  // BACK = quanto a câmera fica ao sul do jogador (jogador sobe na tela).
+  CAM_ALT: 5.5,
+  CAM_ANGULAR_BACK: 0.40,
+  CAM_ANGULAR_ELEV: 0,
+  CAM_LOOK_AHEAD: 0,
+  CAM_LOOK_DOWN: 0,
   CAM_FOLLOW: 14,
-  FOV: 42,
+  FOV: 36,
   DEBUG_GRID_DEFAULT: false,
   MAX_DT: 0.05,
 });

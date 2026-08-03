@@ -23,26 +23,26 @@ function slerpUnit(from, to, t, out) {
 }
 
 /**
- * Câmera satélite do jogador.
+ * Câmera satélite no meridiano geográfico do jogador.
  *
- * Órbita de raio R+alt. Posição via Rodrigues (atrás + elevação).
- * Suavização: slerp na direção unitária (mantém altitude orbital).
- * Up = radial na câmera, Gram–Schmidt contra a visão.
+ * Posição: normal × Rodrigues em torno do *leste geográfico* (atrás = sul).
+ * Fica no plano O–PoloNorte–jogador.
+ *
+ * lookAt(origem): o disco do planeta fica centrado na tela (margens L–R iguais).
+ * Up = Polo Norte → meridiano N–S vertical; jogador na metade superior.
  */
 export class CameraSystem {
   #camera;
   #player;
 
   #normal = new THREE.Vector3();
-  #forward = new THREE.Vector3();
   #east = new THREE.Vector3();
   #desiredDir = new THREE.Vector3();
   #currentDir = new THREE.Vector3();
-  #camRadial = new THREE.Vector3();
   #viewDir = new THREE.Vector3();
   #up = new THREE.Vector3();
-  #lookTarget = new THREE.Vector3();
-  #tmp = new THREE.Vector3();
+  #northPole = new THREE.Vector3(0, 1, 0);
+  #origin = new THREE.Vector3(0, 0, 0);
 
   #orbitRadius = CONFIG.PLANET_RADIUS + CONFIG.CAM_ALT;
   #hasDir = false;
@@ -53,27 +53,21 @@ export class CameraSystem {
   }
 
   update(dt, snap = false) {
-    const playerPos = this.#player.mesh.position;
-    const q = this.#player.mesh.quaternion;
+    const lat = this.#player.lat;
+    const lon = this.#player.lon;
 
-    this.#normal.copy(playerPos).normalize();
-    // Frente local = norte = +Z do frame RH (east, up, north)
-    this.#forward.set(0, 0, 1).applyQuaternion(q);
-    this.#east.set(1, 0, 0).applyQuaternion(q);
+    const cosLat = Math.cos(lat);
+    const sinLat = Math.sin(lat);
+    const cosLon = Math.cos(lon);
+    const sinLon = Math.sin(lon);
 
-    // Rodrigues: normal → atrás (sul = -forward). east×up = north = forward
-    // ângulo negativo em torno do leste move up → -north (atrás)
+    this.#normal.set(cosLat * cosLon, sinLat, cosLat * sinLon).normalize();
+    this.#east.set(-Math.sin(lon), 0, Math.cos(lon)).normalize();
+
     this.#desiredDir.copy(this.#normal);
     this.#desiredDir.applyAxisAngle(this.#east, -CONFIG.CAM_ANGULAR_BACK);
-
-    this.#tmp.crossVectors(this.#desiredDir, this.#east);
-    if (this.#tmp.lengthSq() > 1e-8) {
-      this.#tmp.normalize();
-      this.#desiredDir.applyAxisAngle(this.#tmp, -CONFIG.CAM_ANGULAR_ELEV);
-    }
     this.#desiredDir.normalize();
 
-    // Slerp na esfera unitária → depois escala pelo raio orbital
     if (snap || !this.#hasDir) {
       this.#currentDir.copy(this.#desiredDir);
       this.#hasDir = true;
@@ -84,28 +78,17 @@ export class CameraSystem {
 
     this.#camera.position.copy(this.#currentDir).multiplyScalar(this.#orbitRadius);
 
-    this.#lookTarget
-      .copy(playerPos)
-      .addScaledVector(this.#forward, CONFIG.CAM_LOOK_AHEAD)
-      .addScaledVector(this.#normal, -CONFIG.CAM_LOOK_DOWN);
+    this.#viewDir.copy(this.#origin).sub(this.#camera.position).normalize();
 
-    this.#camRadial.copy(this.#camera.position).normalize();
-    this.#viewDir.subVectors(this.#lookTarget, this.#camera.position);
-    const viewLen = this.#viewDir.length();
-    if (viewLen > 1e-6) this.#viewDir.multiplyScalar(1 / viewLen);
-
-    const d = this.#camRadial.dot(this.#viewDir);
-    this.#up.copy(this.#camRadial).addScaledVector(this.#viewDir, -d);
-
+    this.#up.copy(this.#northPole);
+    this.#up.addScaledVector(this.#viewDir, -this.#up.dot(this.#viewDir));
     if (this.#up.lengthSq() < 1e-8) {
-      this.#up.copy(this.#east);
-      this.#tmp.copy(this.#viewDir).multiplyScalar(this.#up.dot(this.#viewDir));
-      this.#up.sub(this.#tmp);
-      if (this.#up.lengthSq() < 1e-8) this.#up.set(0, 1, 0);
+      this.#up.set(0, 0, 1);
+      this.#up.addScaledVector(this.#viewDir, -this.#up.dot(this.#viewDir));
     }
     this.#up.normalize();
 
     this.#camera.up.copy(this.#up);
-    this.#camera.lookAt(this.#lookTarget);
+    this.#camera.lookAt(this.#origin);
   }
 }

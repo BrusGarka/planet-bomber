@@ -118,10 +118,11 @@ Os blocos têm tamanho fixo em metros (`BLOCK_SCALE`). A colisão atual testa se
 
 A câmera vive numa órbita de raio \(R_{\text{orb}} = R + \texttt{CAM\_ALT}\).
 
-1. Parte da normal do jogador \(\hat{n}\)
-2. Rotação de **Rodrigues** em torno do eixo leste → offset angular para trás (sul local)
-3. Segunda rotação → elevação
-4. Posição desejada: \(\hat{d} \cdot R_{\text{orb}}\)
+1. Parte da normal geográfica do jogador \(\hat{n}\) (a partir de lat/lon — não do quaternion do mesh)
+2. Rotação de **Rodrigues** só em torno do **leste geográfico** → offset para trás (sul). `CAM_ANGULAR_ELEV` deve ser **0** (qualquer componente fora do meridiano desloca o planeta na horizontal)
+3. Posição: \(\hat{d} \cdot R_{\text{orb}}\)
+4. `lookAt(origem)` — o disco do planeta fica centrado na tela; o jogador aparece na metade superior
+5. `up` = Polo Norte + Gram–Schmidt → meridiano N–S vertical
 
 ### Lerp cartesiano vs slerp
 
@@ -140,9 +141,31 @@ com \(\alpha = 1 - e^{-k\,dt}\).
 
 ### Vetor `up`
 
-O prompt inaugural pedia `up` = Polo Norte. A implementação usa **up radial** na câmera, ortogonalizado à direção de visão (Gram–Schmidt): mais estável no globo, sem roll forçado pelo polo. Desvio consciente.
+O prompt inaugural pedia `up` = Polo Norte. A implementação usa **`camera.up = (0,1,0)`** (Polo Norte), ortogonalizado à direção de visão (Gram–Schmidt). Assim o meridiano N–S tende a ficar **vertical na tela** (bandeira no topo-centro).
 
 Arquivo: [`src/systems/CameraSystem.js`](../src/systems/CameraSystem.js).
+
+### Lições aprendidas — enquadramento do planeta
+
+Sintoma que enganou por várias iterações: *“universo à esquerda, planeta cortado à direita”* / *“planeta de lado”*, mesmo com norte no topo.
+
+| Hipótese | Resultado |
+|----------|-----------|
+| `up` radial (em vez do Polo Norte) | Causa **roll**; N–S deixa de ser vertical. Corrigir `up` sozinho **não** centraliza o disco L–R. |
+| `CAM_ANGULAR_ELEV ≠ 0` | Tira a câmera do meridiano → assimetria horizontal real. Manter **0**. |
+| `lookAt(jogador)` | O **centro do disco** na tela é a projeção da **origem** \(O\), não do alvo do `lookAt`. Olhar o jogador deixa \(O\) fora do centro (em geral “para baixo”); em viewport apertado o globo **raspa uma borda** e *parece* deslocado para o lado. |
+| Posição via quaternion do mesh | Em tese coincide com a base geográfica; na prática a posição orbital deve usar **leste/normal de (lat, lon)** para garantir o plano \(O\)–Polo Norte–jogador. |
+
+**Regra que fechou o bug:**
+
+1. Câmera **no meridiano geográfico** do jogador (Rodrigues só no leste, `ELEV = 0`).
+2. **`lookAt(0,0,0)`** — silhueta esférica centrada (margens L–R iguais).
+3. **`camera.up` = Polo Norte** — jogador e bandeira na metade superior / topo.
+4. `CAM_ALT` / `FOV` grandes o suficiente para o disco **caber inteiro** (senão uma borda “come” o planeta e a assimetria volta na percepção).
+
+Trade-off consciente: visão de satélite centrada no planeta (jogador no alto do disco), não terceira pessoa colada no chão. Misturar `lookAt` entre jogador e origem recentra a ação, mas desloca de novo o disco na vertical (e pode raspar bordas).
+
+Validação útil: projetar \(O\) e o jogador em NDC (`Vector3.project(camera)`). Com o setup acima, \(O_x \approx 0\), \(O_y \approx 0\), jogador com \(x \approx 0\) e \(y > 0\).
 
 ---
 
@@ -160,7 +183,8 @@ Neste jogo o playable band fica longe dos polos (`clampPlayableLat` + barreiras 
 |------|--------|
 | Grid métrico | Dimensionar `BLOCK_SCALE` / fatias por arco local \(R\cos\phi\,\Delta\theta\) |
 | Explosão geodésica | Cruz no grid \((b,c)\) ≠ geodésicas; no equador quase coincide |
-| `up` = Polo Norte | Misturar radial com \((0,1,0)\) e ortogonalizar, se quiser o look do prompt |
+| `up` = Polo Norte | Feito: Polo Norte + Gram–Schmidt em `CameraSystem` |
+| Disco centrado L–R | Feito: meridiano geográfico + `lookAt(origem)` + alt/FOV com margem |
 
 ---
 
