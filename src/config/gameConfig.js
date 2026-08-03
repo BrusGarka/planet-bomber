@@ -44,6 +44,7 @@ export const CONFIG = Object.freeze({
   CAM_LOOK_DOWN: 0.12,
   CAM_FOLLOW: 14,
   FOV: 42,
+  DEBUG_GRID_DEFAULT: false,
   MAX_DT: 0.05,
 });
 

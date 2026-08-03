@@ -2,6 +2,8 @@
 
 Documento conceitual da matemática usada no *Planeta Galaxy Bomberman*. Objetivo: entender **por que** o código faz o que faz, e quais armadilhas existem em coordenadas esféricas.
 
+Referência teórica (Wikipédia + links aplicados a câmera, movimento, grid): [`REFERENCIAS-TRIGONOMETRIA-ESFERICA.md`](./REFERENCIAS-TRIGONOMETRIA-ESFERICA.md).
+
 ---
 
 ## 1. Parametrização
@@ -45,7 +47,7 @@ No Three.js o look padrão é **-Z**, mas uma base **direita** com +X=leste e +Y
 
 ```
 makeSurfaceMatrix(lat, lon)
-  → Matrix4 com colunas (east, up, -north)
+  → Matrix4 com colunas (east, up, north)   // base direita; nunca -north
 placeOnSurface(obj, lat, lon, height)
   → position = p(φ,θ) em raio R+height
   → quaternion da matrix acima

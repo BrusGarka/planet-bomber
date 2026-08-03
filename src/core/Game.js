@@ -13,6 +13,7 @@ import { InputSystem } from '../systems/InputSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { Hud, readPlayerCell } from '../ui/Hud.js';
+import { GridDebugOverlay } from '../world/GridDebugOverlay.js';
 
 export class Game {
   #stateMachine = new GameStateMachine();
@@ -28,6 +29,7 @@ export class Game {
   #explosions;
   #bombs;
   #hud;
+  #gridDebug;
   #lastTime = performance.now();
   #yAxis = new THREE.Vector3(0, 1, 0);
 
@@ -52,6 +54,7 @@ export class Game {
       () => this.#onPlayerHit(),
     );
     this.#hud = new Hud();
+    this.#gridDebug = new GridDebugOverlay(scene);
 
     this.#bindInput();
     this.#bindStateHandlers();
@@ -65,6 +68,10 @@ export class Game {
     });
     this.#input.bind('KeyR', () => {
       if (this.#stateMachine.is(GameState.DEAD)) this.reset();
+    });
+    this.#input.bind('KeyG', () => {
+      const on = this.#gridDebug.toggle();
+      this.#hud.setDebugGrid(on);
     });
   }
 
@@ -104,7 +111,11 @@ export class Game {
     this.#camera.update(dt);
 
     const cell = readPlayerCell(this.#player);
-    this.#hud.setStatus({ ...cell, bombs: this.#bombs.count });
+    this.#hud.setStatus({
+      ...cell,
+      bombs: this.#bombs.count,
+      debugGrid: this.#gridDebug.enabled,
+    });
   }
 
   #render() {

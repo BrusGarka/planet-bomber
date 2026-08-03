@@ -15,15 +15,16 @@ export class Planet {
     this.#mesh = new THREE.Mesh(geometry, material);
     this.#mesh.receiveShadow = true;
     scene.add(this.#mesh);
-    this.#addPoleDecor(scene, 1);
-    this.#addPoleDecor(scene, -1);
+    // Grama nos dois polos; bandeira só no Norte
+    this.#addPoleDecor(scene, 1, true);
+    this.#addPoleDecor(scene, -1, false);
   }
 
   get mesh() {
     return this.#mesh;
   }
 
-  #addPoleDecor(scene, latSign) {
+  #addPoleDecor(scene, latSign, withFlag) {
     const lat = latSign * (Math.PI / 2 - 0.18);
     const ring = new THREE.Group();
 
@@ -44,21 +45,23 @@ export class Planet {
     placeOnSurface(flower, lat, 0, 0.12);
     ring.add(flower);
 
-    const flag = new THREE.Group();
-    const pole = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.015, 0.015, 0.35, 6),
-      new THREE.MeshStandardMaterial({ color: 0xddddcc }),
-    );
-    pole.position.y = 0.18;
-    const cloth = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.1, 0.02),
-      new THREE.MeshStandardMaterial({ color: 0xff4444 }),
-    );
-    cloth.position.set(0.09, 0.3, 0);
-    flag.add(pole, cloth);
-    flag.position.copy(sphericalToCartesian(lat, 0.4, CONFIG.PLANET_RADIUS + 0.05));
-    flag.quaternion.setFromRotationMatrix(makeSurfaceMatrix(lat, 0.4));
-    ring.add(flag);
+    if (withFlag) {
+      const flag = new THREE.Group();
+      const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 0.35, 6),
+        new THREE.MeshStandardMaterial({ color: 0xddddcc }),
+      );
+      pole.position.y = 0.18;
+      const cloth = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.1, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0xff4444 }),
+      );
+      cloth.position.set(0.09, 0.3, 0);
+      flag.add(pole, cloth);
+      flag.position.copy(sphericalToCartesian(lat, 0.4, CONFIG.PLANET_RADIUS + 0.05));
+      flag.quaternion.setFromRotationMatrix(makeSurfaceMatrix(lat, 0.4));
+      ring.add(flag);
+    }
 
     scene.add(ring);
   }
