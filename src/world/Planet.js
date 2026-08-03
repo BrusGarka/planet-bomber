@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config/gameConfig.js';
-import { placeOnSurface, sphericalToCartesian, makeSurfaceMatrix } from '../math/spherical.js';
+import { placeOnSurface, sphericalToCartesian } from '../math/spherical.js';
 
 export class Planet {
   #mesh;
@@ -58,8 +58,9 @@ export class Planet {
       );
       cloth.position.set(0.09, 0.3, 0);
       flag.add(pole, cloth);
-      flag.position.copy(sphericalToCartesian(lat, 0.4, CONFIG.PLANET_RADIUS + 0.05));
-      flag.quaternion.setFromRotationMatrix(makeSurfaceMatrix(lat, 0.4));
+      const northLat = Math.PI / 2;
+      flag.position.copy(sphericalToCartesian(northLat, 0, CONFIG.PLANET_RADIUS + 0.05));
+      flag.quaternion.identity();
       ring.add(flag);
     }
 

@@ -172,17 +172,11 @@ export class GridDebugOverlay {
       map: tex,
       transparent: true,
       depthWrite: false,
-      side: THREE.DoubleSide,
+      side: THREE.FrontSide,
     });
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
-    // Plano no XY local: fica deitado? Queremos face para fora = +Y após placeOnSurface.
-    // PlaneGeometry está em XY; após makeSurfaceMatrix, +Y = normal → plano paralelo à superfície.
-    // Rotaciona 90° em X para ficar "em pé" tangente? Melhor: plano no XZ (chão) lendo de cima.
-    // Com placeOnSurface, +Y = fora; PlaneGeometry XY fica vertical no meridiano.
-    // Quero label flat on surface facing outward: rotate plane so normal = +Y.
-    // Default PlaneGeometry normal = +Z. After basis (east,up,north), local +Z = north.
-    // Rotate -90° around X: local +Z → +Y (outward).
-    mesh.rotateX(-Math.PI / 2);
-    return mesh;
+    const geo = new THREE.PlaneGeometry(width, height);
+    // Normal padrão +Z → +Y local: face plana na superfície (placeOnSurface mapeia +Y = radial).
+    geo.rotateX(-Math.PI / 2);
+    return new THREE.Mesh(geo, mat);
   }
 }
