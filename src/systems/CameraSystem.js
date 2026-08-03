@@ -27,7 +27,7 @@ function slerpUnit(from, to, t, out) {
  *
  * Órbita de raio R+alt. Posição via Rodrigues (atrás + elevação).
  * Suavização: slerp na direção unitária (mantém altitude orbital).
- * Direita da tela alinhada ao leste geográfico (A/D absolutos corretos).
+ * Up = radial na câmera, Gram–Schmidt contra a visão.
  */
 export class CameraSystem {
   #camera;
@@ -38,12 +38,11 @@ export class CameraSystem {
   #east = new THREE.Vector3();
   #desiredDir = new THREE.Vector3();
   #currentDir = new THREE.Vector3();
+  #camRadial = new THREE.Vector3();
   #viewDir = new THREE.Vector3();
   #up = new THREE.Vector3();
   #lookTarget = new THREE.Vector3();
   #tmp = new THREE.Vector3();
-  #right = new THREE.Vector3();
-  #back = new THREE.Vector3();
 
   #orbitRadius = CONFIG.PLANET_RADIUS + CONFIG.CAM_ALT;
   #hasDir = false;
@@ -51,8 +50,6 @@ export class CameraSystem {
   constructor(camera, player) {
     this.#camera = camera;
     this.#player = player;
-    // Matriz manual: +X = leste ⇒ D = direita da tela
-    this.#camera.matrixAutoUpdate = false;
   }
 
   update(dt, snap = false) {
@@ -92,25 +89,23 @@ export class CameraSystem {
       .addScaledVector(this.#forward, CONFIG.CAM_LOOK_AHEAD)
       .addScaledVector(this.#normal, -CONFIG.CAM_LOOK_DOWN);
 
-    // Base da câmera (Three.js): +X direita, +Y up, +Z atrás
-    // Forçamos +X = leste projetado ⇒ D (leste) = direita da tela
+    this.#camRadial.copy(this.#camera.position).normalize();
     this.#viewDir.subVectors(this.#lookTarget, this.#camera.position);
     const viewLen = this.#viewDir.length();
     if (viewLen > 1e-6) this.#viewDir.multiplyScalar(1 / viewLen);
 
-    this.#back.copy(this.#viewDir).negate(); // +Z câmera = oposto ao look
+    const d = this.#camRadial.dot(this.#viewDir);
+    this.#up.copy(this.#camRadial).addScaledVector(this.#viewDir, -d);
 
-    this.#right.copy(this.#east);
-    this.#right.addScaledVector(this.#back, -this.#right.dot(this.#back));
-    if (this.#right.lengthSq() < 1e-8) {
-      this.#right.crossVectors(this.#normal, this.#back);
+    if (this.#up.lengthSq() < 1e-8) {
+      this.#up.copy(this.#east);
+      this.#tmp.copy(this.#viewDir).multiplyScalar(this.#up.dot(this.#viewDir));
+      this.#up.sub(this.#tmp);
+      if (this.#up.lengthSq() < 1e-8) this.#up.set(0, 1, 0);
     }
-    this.#right.normalize();
+    this.#up.normalize();
 
-    this.#up.crossVectors(this.#back, this.#right).normalize();
-
-    this.#camera.matrix.makeBasis(this.#right, this.#up, this.#back);
-    this.#camera.matrix.setPosition(this.#camera.position);
-    this.#camera.matrixWorldNeedsUpdate = true;
+    this.#camera.up.copy(this.#up);
+    this.#camera.lookAt(this.#lookTarget);
   }
 }
