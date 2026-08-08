@@ -12,6 +12,7 @@ export const BandType = Object.freeze({
 });
 
 export const GameState = Object.freeze({
+  MENU: 'menu',
   PLAYING: 'playing',
   DEAD: 'dead',
 });

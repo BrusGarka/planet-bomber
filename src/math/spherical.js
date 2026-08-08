@@ -1,6 +1,14 @@
 import * as THREE from 'three';
 import { CONFIG, bandLat } from '../config/gameConfig.js';
 
+const _pos = new THREE.Vector3();
+const _normal = new THREE.Vector3();
+const _textUp = new THREE.Vector3();
+const _textRight = new THREE.Vector3();
+const _viewDir = new THREE.Vector3();
+const _basisZ = new THREE.Vector3();
+const _basis = new THREE.Matrix4();
+
 export function sphericalToCartesian(lat, lon, radius = CONFIG.PLANET_RADIUS) {
   return new THREE.Vector3(
     radius * Math.cos(lat) * Math.cos(lon),
@@ -33,6 +41,39 @@ export function placeOnSurface(object3d, lat, lon, height = 0) {
   object3d.position.copy(pos);
   object3d.quaternion.setFromRotationMatrix(makeSurfaceMatrix(lat, lon));
   object3d.quaternion.normalize();
+}
+
+/**
+ * Adesivo plano na superfície (PlaneGeometry com rotateX(-π/2) → normal local +Y).
+ * Após a rotação, “cima” do canvas = −Z local — por isso +Z da base = −cima do texto.
+ * +X segue a direita da câmera no plano tangente → leitura E→D correta na tela.
+ */
+export function orientDecalOnSurface(object3d, lat, lon, height, camera) {
+  _pos.copy(sphericalToCartesian(lat, lon, CONFIG.PLANET_RADIUS + height));
+  object3d.position.copy(_pos);
+  _normal.copy(_pos).normalize();
+
+  camera.getWorldDirection(_viewDir);
+
+  _textUp.copy(camera.up).addScaledVector(_normal, -camera.up.dot(_normal));
+  if (_textUp.lengthSq() < 1e-8) {
+    _textUp.crossVectors(_normal, _viewDir);
+  }
+  _textUp.normalize();
+
+  // Direita da câmera: viewDir × up, projetada no tangente
+  _textRight.crossVectors(_viewDir, camera.up);
+  _textRight.addScaledVector(_normal, -_textRight.dot(_normal));
+  if (_textRight.lengthSq() < 1e-8) {
+    // Fallback RH: textUp × normal ⇒ X × N = −textUp (Z da base)
+    _textRight.crossVectors(_textUp, _normal);
+  }
+  _textRight.normalize();
+
+  // Z = X × Y = textRight × normal (= −textUp se ortonormal)
+  _basisZ.crossVectors(_textRight, _normal).normalize();
+  _basis.makeBasis(_textRight, _normal, _basisZ);
+  object3d.quaternion.setFromRotationMatrix(_basis).normalize();
 }
 
 export function normalizeLon(lon) {

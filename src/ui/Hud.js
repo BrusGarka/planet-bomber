@@ -5,7 +5,21 @@ export class Hud {
   #statusEl = document.getElementById('status');
   #msgEl = document.getElementById('msg');
   #debugHint = document.getElementById('debug-hint');
+  #hudEl = document.getElementById('hud');
   #debugOn = false;
+
+  showGameplay() {
+    this.#hudEl.hidden = false;
+    this.#statusEl.hidden = false;
+    if (this.#debugHint) this.#debugHint.hidden = false;
+  }
+
+  hideGameplay() {
+    this.#hudEl.hidden = true;
+    this.#statusEl.hidden = true;
+    if (this.#debugHint) this.#debugHint.hidden = true;
+    this.hideMessage();
+  }
 
   setDebugGrid(on) {
     this.#debugOn = on;

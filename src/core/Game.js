@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GameState, CONFIG } from '../config/gameConfig.js';
+import { getPhase, getPhaseConfig } from '../config/phases.js';
 import { GameStateMachine } from './GameStateMachine.js';
 import { createRendererBundle } from '../scene/RendererSetup.js';
 import { createSceneEnvironment } from '../world/SceneEnvironment.js';
@@ -13,6 +14,7 @@ import { InputSystem } from '../systems/InputSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { Hud, readPlayerCell } from '../ui/Hud.js';
+import { PhaseSelect } from '../ui/PhaseSelect.js';
 import { GridDebugOverlay } from '../world/GridDebugOverlay.js';
 
 export class Game {
@@ -29,13 +31,15 @@ export class Game {
   #explosions;
   #bombs;
   #hud;
+  #phaseSelect;
   #gridDebug;
+  #selectedPhase = null;
   #lastTime = performance.now();
   #yAxis = new THREE.Vector3(0, 1, 0);
 
   constructor() {
     this.#rendererBundle = createRendererBundle();
-    const { scene } = this.#rendererBundle;
+    const { scene, renderer } = this.#rendererBundle;
 
     this.#environment = createSceneEnvironment(scene);
     this.#planet = new Planet(scene);
@@ -55,11 +59,33 @@ export class Game {
     );
     this.#hud = new Hud();
     this.#gridDebug = new GridDebugOverlay(scene);
+    this.#phaseSelect = new PhaseSelect((phaseId) => this.startPhase(phaseId));
 
     this.#bindInput();
     this.#bindStateHandlers();
-    this.reset();
+    this.#enterMenu();
+    renderer.domElement.style.display = 'none';
     this.#loop();
+  }
+
+  #enterMenu() {
+    this.#selectedPhase = null;
+    this.#stateMachine.transition(GameState.MENU);
+    this.#hud.hideGameplay();
+    this.#phaseSelect.show();
+    this.#rendererBundle.renderer.domElement.style.display = 'none';
+  }
+
+  startPhase(phaseId) {
+    const phase = getPhase(phaseId);
+    if (!phase?.unlocked) return;
+    if (!getPhaseConfig(phaseId)) return;
+
+    this.#selectedPhase = phaseId;
+    this.#phaseSelect.hide();
+    this.#rendererBundle.renderer.domElement.style.display = '';
+    this.#hud.showGameplay();
+    this.reset();
   }
 
   #bindInput() {
@@ -70,6 +96,7 @@ export class Game {
       if (this.#stateMachine.is(GameState.DEAD)) this.reset();
     });
     this.#input.bind('KeyG', () => {
+      if (this.#stateMachine.isMenu()) return;
       const on = this.#gridDebug.toggle();
       this.#hud.setDebugGrid(on);
     });
@@ -88,6 +115,7 @@ export class Game {
   }
 
   reset() {
+    if (!this.#selectedPhase) return;
     this.#bombs.clear();
     this.#explosions.clear();
     this.#grid.regenerate();
@@ -99,6 +127,8 @@ export class Game {
   }
 
   #update(dt) {
+    if (this.#stateMachine.isMenu()) return;
+
     const now = performance.now();
 
     this.#movement.update(dt, this.#input, this.#stateMachine.isPlaying());
@@ -109,6 +139,7 @@ export class Game {
     this.#environment.sun.target.position.copy(this.#planet.mesh.position);
 
     this.#camera.update(dt);
+    this.#gridDebug.update(this.#rendererBundle.camera);
 
     const cell = readPlayerCell(this.#player);
     this.#hud.setStatus({
@@ -119,6 +150,7 @@ export class Game {
   }
 
   #render() {
+    if (this.#stateMachine.isMenu()) return;
     const { renderer, scene, camera } = this.#rendererBundle;
     renderer.render(scene, camera);
   }

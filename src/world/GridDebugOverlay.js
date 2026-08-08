@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CONFIG, cellCenterLat, cellCenterLon, bandLat } from '../config/gameConfig.js';
-import { sphericalToCartesian, placeOnSurface } from '../math/spherical.js';
+import { sphericalToCartesian, orientDecalOnSurface } from '../math/spherical.js';
 
 /**
  * Overlay de debug do grid esférico.
@@ -17,6 +17,7 @@ export class GridDebugOverlay {
   #root = new THREE.Group();
   #enabled = false;
   #built = false;
+  #decals = [];
 
   constructor(scene) {
     this.#scene = scene;
@@ -39,6 +40,17 @@ export class GridDebugOverlay {
   toggle() {
     this.setEnabled(!this.#enabled);
     return this.#enabled;
+  }
+
+  update(camera) {
+    if (!this.#enabled) return;
+    for (const decal of this.#decals) {
+      orientDecalOnSurface(decal.mesh, decal.lat, decal.lon, decal.height, camera);
+    }
+  }
+
+  #addDecal(mesh, lat, lon, height) {
+    this.#decals.push({ mesh, lat, lon, height });
   }
 
   #build() {
@@ -118,9 +130,9 @@ export class GridDebugOverlay {
     for (let b = 0; b < CONFIG.LAT_BANDS; b++) {
       for (let c = 0; c < CONFIG.LON_SLICES; c++) {
         const label = `F${b + 1}C${c + 1}`;
-        const sprite = this.#makeTextPlane(label, size * 2.2, size * 1.0, 0x111822, 0xe8f4ff);
-        placeOnSurface(sprite, cellCenterLat(b), cellCenterLon(c), 0.04);
-        group.add(sprite);
+        const mesh = this.#makeTextPlane(label, size * 2.2, size * 1.0, 0x111822, 0xe8f4ff);
+        this.#addDecal(mesh, cellCenterLat(b), cellCenterLon(c), 0.04);
+        group.add(mesh);
       }
     }
     return group;
@@ -132,13 +144,13 @@ export class GridDebugOverlay {
     const midCol = 0;
     for (let b = 0; b < CONFIG.LAT_BANDS; b++) {
       const tag = this.#makeTextPlane(`Faixa ${b + 1}`, 0.55, 0.18, 0x3a2810, 0xffe0a0);
-      placeOnSurface(tag, cellCenterLat(b), cellCenterLon(midCol), 0.08);
+      this.#addDecal(tag, cellCenterLat(b), cellCenterLon(midCol), 0.08);
       group.add(tag);
     }
     const midBand = Math.floor(CONFIG.LAT_BANDS / 2);
     for (let c = 0; c < CONFIG.LON_SLICES; c += Math.max(1, Math.floor(CONFIG.LON_SLICES / 8))) {
       const tag = this.#makeTextPlane(`Col ${c + 1}`, 0.4, 0.16, 0x102838, 0xa8e0ff);
-      placeOnSurface(tag, cellCenterLat(midBand), cellCenterLon(c), 0.09);
+      this.#addDecal(tag, cellCenterLat(midBand), cellCenterLon(c), 0.09);
       group.add(tag);
     }
     return group;
@@ -172,10 +184,14 @@ export class GridDebugOverlay {
       map: tex,
       transparent: true,
       depthWrite: false,
+      depthTest: true,
       side: THREE.FrontSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits: -4,
     });
     const geo = new THREE.PlaneGeometry(width, height);
-    // Normal padrão +Z → +Y local: face plana na superfície (placeOnSurface mapeia +Y = radial).
+    // Normal +Z → +Y local: adesivo no plano tangente após orientDecalOnSurface.
     geo.rotateX(-Math.PI / 2);
     return new THREE.Mesh(geo, mat);
   }

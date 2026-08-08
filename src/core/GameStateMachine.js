@@ -1,7 +1,7 @@
 import { GameState } from '../config/gameConfig.js';
 
 export class GameStateMachine {
-  #state = GameState.PLAYING;
+  #state = GameState.MENU;
   #listeners = new Map();
 
   get state() {
@@ -10,6 +10,10 @@ export class GameStateMachine {
 
   is(state) {
     return this.#state === state;
+  }
+
+  isMenu() {
+    return this.#state === GameState.MENU;
   }
 
   isPlaying() {
