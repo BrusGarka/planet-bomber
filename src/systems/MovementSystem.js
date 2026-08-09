@@ -66,12 +66,20 @@ export class MovementSystem {
 
     const cLat = cellCenterLat(cell.band);
     const cLon = cellCenterLon(cell.col);
-    const halfLat = CONFIG.BAND_HEIGHT / 2;
-    const halfLon = (2 * Math.PI / CONFIG.LON_SLICES) / 2;
-    const margin = CONFIG.COLLISION_MARGIN;
+    const R = CONFIG.PLANET_RADIUS;
+    const cosLat = Math.max(Math.abs(Math.cos(cLat)), COS_LAT_EPS);
 
-    const inLat = Math.abs(lat - cLat) < halfLat * margin;
-    const inLon = Math.abs(lonDelta(lon, cLon)) < halfLon * margin;
+    // Caixa de colisão em unidades de mundo: tamanho real do bloco + raio do jogador.
+    // Limitada a COLLISION_MARGIN da célula para nunca fechar corredores em grids densos.
+    const box = CONFIG.BLOCK_SCALE / 2 + CONFIG.PLAYER_COLLIDE_RADIUS;
+    const cellHalfLat = (CONFIG.BAND_HEIGHT / 2) * R;
+    const cellHalfLon = (Math.PI / CONFIG.LON_SLICES) * R * cosLat;
+    const halfLat = Math.min(box, cellHalfLat * CONFIG.COLLISION_MARGIN);
+    const halfLon = Math.min(box, cellHalfLon * CONFIG.COLLISION_MARGIN);
+
+    const inLat = Math.abs(lat - cLat) * R < halfLat;
+    const inLon = Math.abs(lonDelta(lon, cLon)) * R * cosLat < halfLon;
     return inLat && inLon;
   }
 }
+

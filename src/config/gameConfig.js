@@ -31,7 +31,8 @@ const BASE_CONFIG = Object.freeze({
   SPAWN_COL: 1,
   SPAWN_CLEAR_RADIUS: 2,
   CRATE_FILL_CHANCE: 0.42,
-  COLLISION_MARGIN: 0.62,
+  COLLISION_MARGIN: 0.9,
+  PLAYER_COLLIDE_RADIUS: 0.11,
   BOMB_FUSE_MS: 3000,
   BOMB_HEIGHT: 0.11,
   EXPLOSION_RADIUS_CELLS: 2,
@@ -61,15 +62,17 @@ export function applyConfigOverrides(overrides = {}) {
   Object.assign(CONFIG, BASE_CONFIG, overrides);
 }
 
-export const BAND_LAYOUT = Object.freeze([
-  BandType.BARRIER,
-  BandType.STREET,
-  BandType.CHECKER,
-  BandType.STREET,
-  BandType.CHECKER,
-  BandType.STREET,
-  BandType.BARRIER,
-]);
+/**
+ * Layout de faixas derivado de LAT_BANDS (sempre ímpar):
+ * bordas = muralha, ímpares = rua, pares internos = xadrez.
+ * Para 7 faixas resulta no layout clássico original.
+ */
+export function bandType(index) {
+  if (index === 0 || index === CONFIG.LAT_BANDS - 1) return BandType.BARRIER;
+  return index % 2 === 1 ? BandType.STREET : BandType.CHECKER;
+}
+
+
 
 export function bandLat(index) {
   const total = (CONFIG.LAT_BANDS - 1) * CONFIG.BAND_HEIGHT;
