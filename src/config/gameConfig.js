@@ -71,9 +71,6 @@ export function bandType(index) {
   return index % 2 === 1 ? BandType.STREET : BandType.CHECKER;
 }
 
-export const BAND_LAYOUT = new Proxy({}, {
-  get: (_t, prop) => bandType(Number(prop)),
-});
 
 
 export function bandLat(index) {

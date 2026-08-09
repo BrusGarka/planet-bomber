@@ -1,5 +1,5 @@
 import {
-  BAND_LAYOUT,
+  bandType,
   CONFIG,
   CellType,
   BandType,
@@ -66,10 +66,10 @@ export class Grid {
     const rows = [];
     for (let band = 0; band < CONFIG.LAT_BANDS; band++) {
       const row = [];
-      const bandType = BAND_LAYOUT[band];
+      const type = bandType(band);
       for (let col = 0; col < CONFIG.LON_SLICES; col++) {
-        if (bandType === BandType.BARRIER) row.push(CellType.BARRIER);
-        else if (bandType === BandType.CHECKER) row.push(col % 2 === 0 ? CellType.CHECKER : CellType.EMPTY);
+        if (type === BandType.BARRIER) row.push(CellType.BARRIER);
+        else if (type === BandType.CHECKER) row.push(col % 2 === 0 ? CellType.CHECKER : CellType.EMPTY);
         else row.push(CellType.EMPTY);
       }
       rows.push(row);
@@ -89,7 +89,7 @@ export class Grid {
 
   #scatterCrates() {
     for (let band = 0; band < CONFIG.LAT_BANDS; band++) {
-      if (BAND_LAYOUT[band] !== BandType.STREET) continue;
+      if (bandType(band) !== BandType.STREET) continue;
       for (let col = 0; col < CONFIG.LON_SLICES; col++) {
         if (this.isSpawnArea(band, col)) continue;
         if (Math.random() < CONFIG.CRATE_FILL_CHANCE) this.set(band, col, CellType.DESTRUCTIBLE);
