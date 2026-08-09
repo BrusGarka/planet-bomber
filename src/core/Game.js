@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GameState, CONFIG } from '../config/gameConfig.js';
-import { getPhase, getPhaseConfig } from '../config/phases.js';
+import { getPhase, applyPhaseConfig } from '../config/phases.js';
 import { GameStateMachine } from './GameStateMachine.js';
 import { createRendererBundle } from '../scene/RendererSetup.js';
 import { createSceneEnvironment } from '../world/SceneEnvironment.js';
@@ -57,7 +57,7 @@ export class Game {
       this.#explosions,
       () => this.#onPlayerHit(),
     );
-    this.#hud = new Hud();
+    this.#hud = new Hud(() => this.#enterMenu());
     this.#gridDebug = new GridDebugOverlay(scene);
     this.#phaseSelect = new PhaseSelect((phaseId) => this.startPhase(phaseId));
 
@@ -79,9 +79,11 @@ export class Game {
   startPhase(phaseId) {
     const phase = getPhase(phaseId);
     if (!phase?.unlocked) return;
-    if (!getPhaseConfig(phaseId)) return;
+    if (!applyPhaseConfig(phaseId)) return;
 
     this.#selectedPhase = phaseId;
+    this.#planet.rebuild();
+    this.#gridDebug.rebuild();
     this.#phaseSelect.hide();
     this.#rendererBundle.renderer.domElement.style.display = '';
     this.#hud.showGameplay();
@@ -94,6 +96,9 @@ export class Game {
     });
     this.#input.bind('KeyR', () => {
       if (this.#stateMachine.is(GameState.DEAD)) this.reset();
+    });
+    this.#input.bind('Escape', () => {
+      if (!this.#stateMachine.isMenu()) this.#enterMenu();
     });
     this.#input.bind('KeyG', () => {
       if (this.#stateMachine.isMenu()) return;

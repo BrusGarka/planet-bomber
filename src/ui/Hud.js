@@ -6,17 +6,24 @@ export class Hud {
   #msgEl = document.getElementById('msg');
   #debugHint = document.getElementById('debug-hint');
   #hudEl = document.getElementById('hud');
+  #menuBtn = document.getElementById('btn-menu');
   #debugOn = false;
+
+  constructor(onBackToMenu) {
+    this.#menuBtn?.addEventListener('click', () => onBackToMenu?.());
+  }
 
   showGameplay() {
     this.#hudEl.hidden = false;
     this.#statusEl.hidden = false;
+    if (this.#menuBtn) this.#menuBtn.hidden = false;
     if (this.#debugHint) this.#debugHint.hidden = false;
   }
 
   hideGameplay() {
     this.#hudEl.hidden = true;
     this.#statusEl.hidden = true;
+    if (this.#menuBtn) this.#menuBtn.hidden = true;
     if (this.#debugHint) this.#debugHint.hidden = true;
     this.hideMessage();
   }
