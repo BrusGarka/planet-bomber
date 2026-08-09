@@ -61,15 +61,20 @@ export function applyConfigOverrides(overrides = {}) {
   Object.assign(CONFIG, BASE_CONFIG, overrides);
 }
 
-export const BAND_LAYOUT = Object.freeze([
-  BandType.BARRIER,
-  BandType.STREET,
-  BandType.CHECKER,
-  BandType.STREET,
-  BandType.CHECKER,
-  BandType.STREET,
-  BandType.BARRIER,
-]);
+/**
+ * Layout de faixas derivado de LAT_BANDS (sempre ímpar):
+ * bordas = muralha, ímpares = rua, pares internos = xadrez.
+ * Para 7 faixas resulta no layout clássico original.
+ */
+export function bandType(index) {
+  if (index === 0 || index === CONFIG.LAT_BANDS - 1) return BandType.BARRIER;
+  return index % 2 === 1 ? BandType.STREET : BandType.CHECKER;
+}
+
+export const BAND_LAYOUT = new Proxy({}, {
+  get: (_t, prop) => bandType(Number(prop)),
+});
+
 
 export function bandLat(index) {
   const total = (CONFIG.LAT_BANDS - 1) * CONFIG.BAND_HEIGHT;
