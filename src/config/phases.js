@@ -13,7 +13,7 @@ const PHASE_CONFIGS = Object.freeze({
     PLANET_RADIUS: 1.1,
     LON_SLICES: 20,
     BAND_HEIGHT: 0.315,
-    CAM_ALT: 3.2,
+    CAM_ALT: 4.6,
     PLAYER_MOVE_SPEED: 2.6,
   }),
 
@@ -22,7 +22,7 @@ const PHASE_CONFIGS = Object.freeze({
     PLANET_RADIUS: 2.0,
     LON_SLICES: 44,
     BAND_HEIGHT: 0.145,
-    CAM_ALT: 4.4,
+    CAM_ALT: 6.8,
     PLAYER_MOVE_SPEED: 0.95,
     SPAWN_COL: 3,
     EXPLOSION_RADIUS_CELLS: 3,
