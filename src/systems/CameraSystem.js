@@ -44,8 +44,11 @@ export class CameraSystem {
   #northPole = new THREE.Vector3(0, 1, 0);
   #origin = new THREE.Vector3(0, 0, 0);
 
-  #orbitRadius = CONFIG.PLANET_RADIUS + CONFIG.CAM_ALT;
   #hasDir = false;
+
+  get #orbitRadius() {
+    return CONFIG.PLANET_RADIUS + CONFIG.CAM_ALT;
+  }
 
   constructor(camera, player) {
     this.#camera = camera;

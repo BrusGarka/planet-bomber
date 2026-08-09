@@ -3,9 +3,37 @@ import { CONFIG } from '../config/gameConfig.js';
 import { placeOnSurface, sphericalToCartesian } from '../math/spherical.js';
 
 export class Planet {
+  #scene;
+  #root = new THREE.Group();
   #mesh;
 
   constructor(scene) {
+    this.#scene = scene;
+    scene.add(this.#root);
+    this.#build();
+  }
+
+  get mesh() {
+    return this.#mesh;
+  }
+
+  /** Reconstrói para o raio atual de CONFIG (troca de fase). */
+  rebuild() {
+    this.#dispose();
+    this.#build();
+  }
+
+  #dispose() {
+    this.#root.traverse((obj) => {
+      if (obj.isMesh) {
+        obj.geometry?.dispose();
+        obj.material?.dispose();
+      }
+    });
+    this.#root.clear();
+  }
+
+  #build() {
     const geometry = new THREE.SphereGeometry(CONFIG.PLANET_RADIUS, 64, 48);
     const material = new THREE.MeshStandardMaterial({
       color: 0xad8348,
@@ -14,17 +42,13 @@ export class Planet {
     });
     this.#mesh = new THREE.Mesh(geometry, material);
     this.#mesh.receiveShadow = true;
-    scene.add(this.#mesh);
+    this.#root.add(this.#mesh);
     // Grama nos dois polos; bandeira só no Norte
-    this.#addPoleDecor(scene, 1, true);
-    this.#addPoleDecor(scene, -1, false);
+    this.#addPoleDecor(1, true);
+    this.#addPoleDecor(-1, false);
   }
 
-  get mesh() {
-    return this.#mesh;
-  }
-
-  #addPoleDecor(scene, latSign, withFlag) {
+  #addPoleDecor(latSign, withFlag) {
     const lat = latSign * (Math.PI / 2 - 0.18);
     const ring = new THREE.Group();
 
@@ -64,6 +88,6 @@ export class Planet {
       ring.add(flag);
     }
 
-    scene.add(ring);
+    this.#root.add(ring);
   }
 }

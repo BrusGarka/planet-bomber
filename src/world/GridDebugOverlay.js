@@ -42,6 +42,20 @@ export class GridDebugOverlay {
     return this.#enabled;
   }
 
+  /** Descarta a malha atual (grid mudou de fase); reconstrói sob demanda. */
+  rebuild() {
+    this.#root.traverse((obj) => {
+      if (obj.isMesh || obj.isLine) {
+        obj.geometry?.dispose();
+        obj.material?.map?.dispose?.();
+      }
+    });
+    this.#root.clear();
+    this.#decals = [];
+    this.#built = false;
+    if (this.#enabled) this.#build();
+  }
+
   update(camera) {
     if (!this.#enabled) return;
     for (const decal of this.#decals) {

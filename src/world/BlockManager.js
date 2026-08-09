@@ -9,6 +9,7 @@ export class BlockManager {
   #stoneMat = new THREE.MeshStandardMaterial({ color: 0x8a9098, roughness: 0.55, metalness: 0.15 });
   #crateMat = new THREE.MeshStandardMaterial({ color: 0xc47a2a, roughness: 0.88, metalness: 0.02 });
   #geometry = new THREE.BoxGeometry(CONFIG.BLOCK_SCALE, CONFIG.BLOCK_SCALE, CONFIG.BLOCK_SCALE);
+  #geometryScale = CONFIG.BLOCK_SCALE;
   #blockTop = CONFIG.BLOCK_SCALE / 2;
 
   constructor(scene, grid) {
@@ -18,6 +19,12 @@ export class BlockManager {
 
   rebuild() {
     this.clear();
+    if (this.#geometryScale !== CONFIG.BLOCK_SCALE) {
+      this.#geometry.dispose();
+      this.#geometryScale = CONFIG.BLOCK_SCALE;
+      this.#geometry = new THREE.BoxGeometry(CONFIG.BLOCK_SCALE, CONFIG.BLOCK_SCALE, CONFIG.BLOCK_SCALE);
+      this.#blockTop = CONFIG.BLOCK_SCALE / 2;
+    }
     for (let band = 0; band < CONFIG.LAT_BANDS; band++) {
       for (let col = 0; col < CONFIG.LON_SLICES; col++) {
         const type = this.#grid.get(band, col);
