@@ -17,7 +17,7 @@ export const GameState = Object.freeze({
   DEAD: 'dead',
 });
 
-export const CONFIG = Object.freeze({
+const BASE_CONFIG = Object.freeze({
   // Planeta compacto
   PLANET_RADIUS: 2.0,
   LAT_BANDS: 7,
@@ -50,6 +50,16 @@ export const CONFIG = Object.freeze({
   DEBUG_GRID_DEFAULT: false,
   MAX_DT: 0.05,
 });
+
+/**
+ * Config ativa (mutável): cada fase aplica seus overrides sobre BASE_CONFIG.
+ * Módulos leem CONFIG.X em tempo de execução — não copiem valores no import.
+ */
+export const CONFIG = { ...BASE_CONFIG };
+
+export function applyConfigOverrides(overrides = {}) {
+  Object.assign(CONFIG, BASE_CONFIG, overrides);
+}
 
 export const BAND_LAYOUT = Object.freeze([
   BandType.BARRIER,
