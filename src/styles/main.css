@@ -227,12 +227,40 @@ html, body {
 
 #touch-controls[hidden] { display: none; }
 
-.touch-dpad {
-  display: grid;
-  grid-template-columns: repeat(3, 58px);
-  grid-template-rows: repeat(3, 58px);
-  gap: 6px;
+.touch-zone {
+  position: relative;
+  flex: 1;
+  align-self: stretch;
+  min-height: 45vh;
+  max-width: 55vw;
   pointer-events: auto;
+  touch-action: none;
+}
+
+.touch-stick {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  margin: -64px 0 0 -64px;
+  border-radius: 50%;
+  border: 1px solid rgba(159, 214, 255, 0.35);
+  background: radial-gradient(circle, rgba(20, 34, 52, 0.45), rgba(10, 16, 26, 0.28));
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.touch-stick[hidden] { display: none; }
+
+.touch-stick__knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 1px solid rgba(159, 214, 255, 0.6);
+  background: rgba(40, 74, 110, 0.72);
+  transform: translate(-50%, -50%);
 }
 
 .touch-btn {
@@ -255,11 +283,6 @@ html, body {
   background: rgba(40, 74, 110, 0.92);
   border-color: rgba(159, 214, 255, 0.8);
 }
-
-.touch-dpad__btn--up { grid-area: 1 / 2; }
-.touch-dpad__btn--left { grid-area: 2 / 1; }
-.touch-dpad__btn--right { grid-area: 2 / 3; }
-.touch-dpad__btn--down { grid-area: 3 / 2; }
 
 .touch-actions { pointer-events: auto; }
 
