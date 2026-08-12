@@ -15,6 +15,7 @@ import { MovementSystem } from '../systems/MovementSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { Hud, readPlayerCell } from '../ui/Hud.js';
 import { PhaseSelect } from '../ui/PhaseSelect.js';
+import { TouchControls } from '../ui/TouchControls.js';
 import { GridDebugOverlay } from '../world/GridDebugOverlay.js';
 
 export class Game {
@@ -33,6 +34,7 @@ export class Game {
   #hud;
   #phaseSelect;
   #gridDebug;
+  #touch;
   #selectedPhase = null;
   #lastTime = performance.now();
   #yAxis = new THREE.Vector3(0, 1, 0);
@@ -59,6 +61,7 @@ export class Game {
     );
     this.#hud = new Hud(() => this.#enterMenu());
     this.#gridDebug = new GridDebugOverlay(scene);
+    this.#touch = new TouchControls(this.#input);
     this.#phaseSelect = new PhaseSelect((phaseId) => this.startPhase(phaseId));
 
     this.#bindInput();
@@ -72,6 +75,7 @@ export class Game {
     this.#selectedPhase = null;
     this.#stateMachine.transition(GameState.MENU);
     this.#hud.hideGameplay();
+    this.#touch.hide();
     this.#phaseSelect.show();
     this.#rendererBundle.renderer.domElement.style.display = 'none';
   }
@@ -87,6 +91,7 @@ export class Game {
     this.#phaseSelect.hide();
     this.#rendererBundle.renderer.domElement.style.display = '';
     this.#hud.showGameplay();
+    this.#touch.show();
     this.reset();
   }
 
