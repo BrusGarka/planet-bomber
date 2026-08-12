@@ -64,6 +64,12 @@ export class Game {
     this.#touch = new TouchControls(this.#input);
     this.#phaseSelect = new PhaseSelect((phaseId) => this.startPhase(phaseId));
 
+    document.getElementById('msg')?.addEventListener('pointerdown', (e) => {
+      if (!this.#stateMachine.is(GameState.DEAD)) return;
+      e.preventDefault();
+      this.reset();
+    });
+
     this.#bindInput();
     this.#bindStateHandlers();
     this.#enterMenu();
@@ -115,7 +121,7 @@ export class Game {
   #bindStateHandlers() {
     this.#stateMachine.on(GameState.DEAD, () => {
       this.#player.markDead();
-      this.#hud.showMessage('Você foi atingido!', 'Pressione R para reiniciar');
+      this.#hud.showMessage('Você foi atingido!', 'Pressione R ou toque para reiniciar');
     });
   }
 
