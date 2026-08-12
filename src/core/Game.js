@@ -15,6 +15,7 @@ import { MovementSystem } from '../systems/MovementSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { Hud, readPlayerCell } from '../ui/Hud.js';
 import { PhaseSelect } from '../ui/PhaseSelect.js';
+import { TouchControls } from '../ui/TouchControls.js';
 import { GridDebugOverlay } from '../world/GridDebugOverlay.js';
 
 export class Game {
@@ -33,6 +34,7 @@ export class Game {
   #hud;
   #phaseSelect;
   #gridDebug;
+  #touch;
   #selectedPhase = null;
   #lastTime = performance.now();
   #yAxis = new THREE.Vector3(0, 1, 0);
@@ -59,7 +61,14 @@ export class Game {
     );
     this.#hud = new Hud(() => this.#enterMenu());
     this.#gridDebug = new GridDebugOverlay(scene);
+    this.#touch = new TouchControls(this.#input);
     this.#phaseSelect = new PhaseSelect((phaseId) => this.startPhase(phaseId));
+
+    document.getElementById('msg')?.addEventListener('pointerdown', (e) => {
+      if (!this.#stateMachine.is(GameState.DEAD)) return;
+      e.preventDefault();
+      this.reset();
+    });
 
     this.#bindInput();
     this.#bindStateHandlers();
@@ -72,6 +81,7 @@ export class Game {
     this.#selectedPhase = null;
     this.#stateMachine.transition(GameState.MENU);
     this.#hud.hideGameplay();
+    this.#touch.hide();
     this.#phaseSelect.show();
     this.#rendererBundle.renderer.domElement.style.display = 'none';
   }
@@ -87,6 +97,7 @@ export class Game {
     this.#phaseSelect.hide();
     this.#rendererBundle.renderer.domElement.style.display = '';
     this.#hud.showGameplay();
+    this.#touch.show();
     this.reset();
   }
 
@@ -110,7 +121,7 @@ export class Game {
   #bindStateHandlers() {
     this.#stateMachine.on(GameState.DEAD, () => {
       this.#player.markDead();
-      this.#hud.showMessage('Você foi atingido!', 'Pressione R para reiniciar');
+      this.#hud.showMessage('Você foi atingido!', 'Pressione R ou toque para reiniciar');
     });
   }
 

@@ -18,6 +18,16 @@ export class InputSystem {
     this.#actions.set(code, action);
   }
 
+  /** Estado sustentado (usado pelos botões touch do d-pad). */
+  setKey(code, down) {
+    this.#keys.set(code, down === true);
+  }
+
+  /** Dispara uma ação pontual (bomba, menu…) sem teclado. */
+  trigger(code) {
+    this.#actions.get(code)?.();
+  }
+
   isDown(code) {
     return this.#keys.get(code) === true;
   }
