@@ -270,8 +270,10 @@ html, body {
   font-size: 32px;
 }
 
-@media (max-width: 520px) {
-  #hud { font-size: 12px; max-width: 220px; }
+@media (pointer: coarse), (max-width: 520px) {
+  #hud { font-size: 11px; max-width: 60vw; padding: 8px 10px; }
+  #hud h1 { font-size: 13px; margin-bottom: 0; }
+  #hud div { display: none; }
   #debug-hint { display: none; }
-  #status { bottom: auto; top: 58px; left: 12px; }
+  #status { bottom: auto; top: 58px; left: 12px; font-size: 11px; }
 }
