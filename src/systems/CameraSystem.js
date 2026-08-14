@@ -69,7 +69,7 @@ export class CameraSystem {
 
 
     this.#desiredDir.copy(this.#normal);
-    this.#desiredDir.applyAxisAngle(this.#east, CONFIG.CAM_ANGULAR_BACK);
+    this.#desiredDir.applyAxisAngle(this.#east, -CONFIG.CAM_ANGULAR_BACK);
     this.#desiredDir.normalize();
 
     if (snap || !this.#hasDir) {
