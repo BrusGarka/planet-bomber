@@ -30,10 +30,14 @@ export function makeSurfaceMatrix(lat, lon) {
     -Math.cos(lon),
   ).normalize();
 
-  // RH: east × up = north → +X leste, +Y up, +Z norte (frente local = +Z)
+  // Mundo espelhado em longitude (θ → −θ) para leste ficar à direita na tela:
+  // a tríade geográfica (east, up, north) é canhota (det = −1). Usamos −east como
+  // +X para manter uma rotação pura (det = +1) com +Z = norte (frente local).
+  // Efeito visual: malhas ficam espelhadas no eixo X — invisível em blocos/boneco.
   const matrix = new THREE.Matrix4();
-  matrix.makeBasis(east, up, north);
+  matrix.makeBasis(east.clone().negate(), up, north);
   return matrix;
+
 }
 
 
