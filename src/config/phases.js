@@ -1,21 +1,23 @@
 import { applyConfigOverrides } from './gameConfig.js';
 
 /**
- * Overrides por fase. Blocos têm sempre o mesmo tamanho (BLOCK_SCALE):
- * a densidade vem do raio do planeta e do passo angular do grid.
+ * Overrides por fase. Cubos usam BLOCK_SCALE fixo; a densidade vem do
+ * raio e do passo angular. Planeta 5 preenche a célula (BLOCK_SHAPE).
  */
+const P2_SIZE = Object.freeze({
+  PLANET_RADIUS: 1.1,
+  LON_SLICES: 20,
+  BAND_HEIGHT: 0.315,
+  CAM_ALT: 4.6,
+  PLAYER_MOVE_SPEED: 2.6,
+});
+
 const PHASE_CONFIGS = Object.freeze({
   // Planeta 1 — referência (grid folgado)
   p1: Object.freeze({}),
 
   // Planeta 2 — planeta pequeno (~metade do raio), blocos quase colados
-  p2: Object.freeze({
-    PLANET_RADIUS: 1.1,
-    LON_SLICES: 20,
-    BAND_HEIGHT: 0.315,
-    CAM_ALT: 4.6,
-    PLAYER_MOVE_SPEED: 2.6,
-  }),
+  p2: Object.freeze({ ...P2_SIZE }),
 
   // Planeta 3 — cópia do 1 (mesmo raio) com grid muito mais denso
   p3: Object.freeze({
@@ -40,6 +42,9 @@ const PHASE_CONFIGS = Object.freeze({
     SPAWN_COL: 3,
     EXPLOSION_RADIUS_CELLS: 3,
   }),
+
+  // Planeta 5 — mesmo tamanho do 2, blocos em frustum até o limite do grid
+  p5: Object.freeze({ ...P2_SIZE, BLOCK_SHAPE: 'cell-frustum' }),
 });
 
 export const PHASES = Object.freeze([
@@ -47,6 +52,7 @@ export const PHASES = Object.freeze([
   { id: 'planeta-2', label: 'Planeta 2', unlocked: true, configKey: 'p2' },
   { id: 'planeta-3', label: 'Planeta 3', unlocked: true, configKey: 'p3' },
   { id: 'planeta-4', label: 'Planeta 4', unlocked: true, configKey: 'p4' },
+  { id: 'planeta-5', label: 'Planeta 5', unlocked: true, configKey: 'p5' },
 ]);
 
 export function getPhase(phaseId) {

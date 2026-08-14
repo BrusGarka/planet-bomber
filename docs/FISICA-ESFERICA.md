@@ -113,9 +113,13 @@ O grid divide o planeta em faixas de altura angular fixa (`BAND_HEIGHT`) e fatia
 - Em **ângulo**, a célula é um “retângulo” \((\Delta\phi, \Delta\theta)\).
 - Na **superfície**, é um trapézio esférico: a largura leste–oeste encolhe com \(\cos\phi\).
 
-Os blocos têm tamanho fixo em metros (`BLOCK_SCALE`). A colisão atual testa se o jogador está perto do **centro da célula em \((\phi,\theta)\)** com uma margem angular (`COLLISION_MARGIN`). Isso é simples e jogável perto do equador, mas **não** é colisão métrica exata bloco↔cápsula.
+A colisão **não** usa o tamanho visual do cubo. Célula sólida (`BARRIER` / `CHECKER` / `DESTRUCTIBLE`) bloqueia 100% do retângulo \((\Delta\phi, \Delta\theta)\). Ruas (`EMPTY`) continuam andáveis.
 
-`cellAt`, `lonDelta`, `#isBlocked` — mesma família de funções.
+O jogador tem espessura `PLAYER_COLLIDE_RADIUS`: além do ponto central, `#isBlocked` amostra 8 direções a esse raio (arco \(r/R\), longitude corrigida por \(\cos\phi\)). O raio é limitado a 45% do menor lado métrico da célula local, para um corredor de 1 célula não ficar inandável em grids densos (ex.: Planeta 4, F2). O passo contra o muro desliza no eixo livre.
+
+No Planeta 5 o visual acompanha isso (`BLOCK_SHAPE: 'cell-frustum'`): a malha é o trapézio esférico da célula extrudado no raio. Nos demais planetas o cubo (`BLOCK_SCALE`) pode ser menor que a célula — a física ainda ocupa o limite do grid.
+
+`cellAt`, `#isBlocked` — mesma família de funções.
 
 ---
 

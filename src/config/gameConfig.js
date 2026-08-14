@@ -24,6 +24,8 @@ const BASE_CONFIG = Object.freeze({
   LON_SLICES: 16,
   BAND_HEIGHT: 0.38,
   BLOCK_SCALE: 0.24,
+  /** 'cube' = cubo no centro; 'cell-frustum' = trapézio até o limite da célula */
+  BLOCK_SHAPE: 'cube',
   PLAYER_FLOAT: 0.28,
   /** Arco / s no meridiano (rad). Lon usa speed/cos(φ) — ver docs/FISICA-ESFERICA.md */
   PLAYER_MOVE_SPEED: 1.65,
@@ -31,7 +33,6 @@ const BASE_CONFIG = Object.freeze({
   SPAWN_COL: 1,
   SPAWN_CLEAR_RADIUS: 2,
   CRATE_FILL_CHANCE: 0.42,
-  COLLISION_MARGIN: 0.9,
   PLAYER_COLLIDE_RADIUS: 0.11,
   BOMB_FUSE_MS: 3000,
   BOMB_HEIGHT: 0.11,
@@ -73,12 +74,16 @@ export function bandType(index) {
   return index % 2 === 1 ? BandType.STREET : BandType.CHECKER;
 }
 
-
-
 export function bandLat(index) {
   const total = (CONFIG.LAT_BANDS - 1) * CONFIG.BAND_HEIGHT;
   const start = total / 2;
   return start - index * CONFIG.BAND_HEIGHT;
+}
+
+/** Paralelo da borda: 0 = norte de F1, LAT_BANDS = sul da última faixa. */
+export function bandLatEdge(edgeIndex) {
+  const north = (CONFIG.LAT_BANDS * CONFIG.BAND_HEIGHT) / 2;
+  return north - edgeIndex * CONFIG.BAND_HEIGHT;
 }
 
 export function cellCenterLat(band) {
@@ -87,4 +92,15 @@ export function cellCenterLat(band) {
 
 export function cellCenterLon(col) {
   return (col + 0.5) * (2 * Math.PI / CONFIG.LON_SLICES) - Math.PI;
+}
+
+/** Limites angulares da célula (bordas dos meridianos e paralelos do overlay). */
+export function cellLatLonBounds(band, col) {
+  const slice = (2 * Math.PI) / CONFIG.LON_SLICES;
+  return {
+    latN: bandLatEdge(band),
+    latS: bandLatEdge(band + 1),
+    lonW: col * slice - Math.PI,
+    lonE: (col + 1) * slice - Math.PI,
+  };
 }

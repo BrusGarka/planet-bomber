@@ -1,8 +1,7 @@
-import { CONFIG, CellType, cellCenterLat, cellCenterLon } from '../config/gameConfig.js';
+import { CONFIG } from '../config/gameConfig.js';
 import {
   cellAt,
   clampPlayableLat,
-  lonDelta,
   normalizeLon,
 } from '../math/spherical.js';
 
@@ -10,9 +9,18 @@ import {
 const COS_LAT_EPS = 0.08;
 
 /**
+ * Fração máxima da célula usada como raio de espessura.
+ * r < ½ da célula garante que um corredor de 1 célula (rua) permanece andável.
+ */
+const COLLIDE_CELL_FRACTION = 0.45;
+
+/**
  * Movimento absoluto N/S/L/O com velocidade métrica na superfície.
  * PLAYER_MOVE_SPEED = radianos de arco / s no meridiano (v = ω·R).
  * dφ = n̂·ω·dt ; dθ = ê·ω·dt / cos(φ)
+ *
+ * Colisão: célula sólida ocupa 100% do retângulo (φ,θ). Espessura do jogador
+ * é amostrada em 8 direções, com raio limitado para não fechar ruas estreitas.
  */
 export class MovementSystem {
   constructor(player, grid) {
@@ -52,34 +60,59 @@ export class MovementSystem {
   }
 
   #tryMove(dLat, dLon) {
-    const newLat = clampPlayableLat(this.player.lat + dLat);
-    const newLon = normalizeLon(this.player.lon + dLon);
-    if (this.#isBlocked(newLat, newLon)) return false;
-    this.player.setPosition(newLat, newLon);
-    return true;
+    const lat0 = this.player.lat;
+    const lon0 = this.player.lon;
+    const newLat = clampPlayableLat(lat0 + dLat);
+    const newLon = normalizeLon(lon0 + dLon);
+
+    if (!this.#isBlocked(newLat, newLon)) {
+      this.player.setPosition(newLat, newLon);
+      return true;
+    }
+
+    // Desliza no eixo livre quando o passo diagonal/cheio bate no muro.
+    let moved = false;
+    const latOnly = clampPlayableLat(lat0 + dLat);
+    if (!this.#isBlocked(latOnly, lon0)) {
+      this.player.setPosition(latOnly, lon0);
+      moved = true;
+    }
+    const lonOnly = normalizeLon(lon0 + dLon);
+    if (!this.#isBlocked(this.player.lat, lonOnly)) {
+      this.player.setPosition(this.player.lat, lonOnly);
+      moved = true;
+    }
+    return moved;
   }
 
   #isBlocked(lat, lon) {
+    if (this.#cellSolid(lat, lon)) return true;
+
+    const R = CONFIG.PLANET_RADIUS;
+    const cosLat = Math.max(Math.abs(Math.cos(lat)), COS_LAT_EPS);
+    const cellLatM = CONFIG.BAND_HEIGHT * R;
+    const cellLonM = (2 * Math.PI / CONFIG.LON_SLICES) * R * cosLat;
+    const r = Math.min(
+      CONFIG.PLAYER_COLLIDE_RADIUS,
+      COLLIDE_CELL_FRACTION * Math.min(cellLatM, cellLonM),
+    );
+    const dAng = r / R;
+    const dLon = dAng / cosLat;
+    const diag = Math.SQRT1_2;
+
+    return this.#cellSolid(lat + dAng, lon)
+      || this.#cellSolid(lat - dAng, lon)
+      || this.#cellSolid(lat, normalizeLon(lon + dLon))
+      || this.#cellSolid(lat, normalizeLon(lon - dLon))
+      || this.#cellSolid(lat + dAng * diag, normalizeLon(lon + dLon * diag))
+      || this.#cellSolid(lat + dAng * diag, normalizeLon(lon - dLon * diag))
+      || this.#cellSolid(lat - dAng * diag, normalizeLon(lon + dLon * diag))
+      || this.#cellSolid(lat - dAng * diag, normalizeLon(lon - dLon * diag));
+  }
+
+  #cellSolid(lat, lon) {
     const cell = cellAt(lat, lon);
     if (!cell) return true;
-    if (this.grid.get(cell.band, cell.col) === CellType.EMPTY) return false;
-
-    const cLat = cellCenterLat(cell.band);
-    const cLon = cellCenterLon(cell.col);
-    const R = CONFIG.PLANET_RADIUS;
-    const cosLat = Math.max(Math.abs(Math.cos(cLat)), COS_LAT_EPS);
-
-    // Caixa de colisão em unidades de mundo: tamanho real do bloco + raio do jogador.
-    // Limitada a COLLISION_MARGIN da célula para nunca fechar corredores em grids densos.
-    const box = CONFIG.BLOCK_SCALE / 2 + CONFIG.PLAYER_COLLIDE_RADIUS;
-    const cellHalfLat = (CONFIG.BAND_HEIGHT / 2) * R;
-    const cellHalfLon = (Math.PI / CONFIG.LON_SLICES) * R * cosLat;
-    const halfLat = Math.min(box, cellHalfLat * CONFIG.COLLISION_MARGIN);
-    const halfLon = Math.min(box, cellHalfLon * CONFIG.COLLISION_MARGIN);
-
-    const inLat = Math.abs(lat - cLat) * R < halfLat;
-    const inLon = Math.abs(lonDelta(lon, cLon)) * R * cosLat < halfLon;
-    return inLat && inLon;
+    return this.grid.isSolid(this.grid.get(cell.band, cell.col));
   }
 }
-
