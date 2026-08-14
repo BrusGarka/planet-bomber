@@ -15,11 +15,16 @@ O planeta está centrado na origem. Usamos latitude \(\phi\) **desde o equador**
 R \begin{pmatrix}
 \cos\phi\cos\theta \\
 \sin\phi \\
-\cos\phi\sin\theta
+-\cos\phi\sin\theta
 \end{pmatrix}
 \]
 
+> **Sinal de Z (espelhamento em longitude):** com \(+\cos\phi\sin\theta\), o leste geográfico era desenhado **à esquerda** da tela (câmera com norte em cima, `lookAt(origem)`) — apertar D parecia ir para oeste e as colunas `C1…Cn` cresciam para a esquerda. Usar \(-\cos\phi\sin\theta\) equivale a \(\theta \to -\theta\): leste passa a ficar à direita e a numeração das colunas cresce para a direita. A métrica não muda (\(ds_\theta = R\cos\phi\,d\theta\)).
+>
+> Consequência: a tríade geográfica (leste, up, norte) fica **canhota** (\(\det = -1\)). Para manter uma rotação pura, `makeSurfaceMatrix` usa `makeBasis(-east, up, north)`: **+Z continua norte** (frente local) e as malhas ficam espelhadas em X — invisível em cubos e no boneco.
+
 No código: `sphericalToCartesian(lat, lon, radius)` em [`src/math/spherical.js`](../src/math/spherical.js).
+
 
 | Símbolo | Código | Significado |
 |---------|--------|-------------|
