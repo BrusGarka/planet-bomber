@@ -64,8 +64,9 @@ export class CameraSystem {
     const cosLon = Math.cos(lon);
     const sinLon = Math.sin(lon);
 
-    this.#normal.set(cosLat * cosLon, sinLat, cosLat * sinLon).normalize();
-    this.#east.set(-Math.sin(lon), 0, Math.cos(lon)).normalize();
+    this.#normal.set(cosLat * cosLon, sinLat, -cosLat * sinLon).normalize();
+    this.#east.set(-Math.sin(lon), 0, -Math.cos(lon)).normalize();
+
 
     this.#desiredDir.copy(this.#normal);
     this.#desiredDir.applyAxisAngle(this.#east, -CONFIG.CAM_ANGULAR_BACK);
