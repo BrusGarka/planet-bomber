@@ -41,8 +41,9 @@ const BASE_CONFIG = Object.freeze({
   // Órbita satélite (ângulos em radianos)
   // Posição no meridiano (ELEV=0). lookAt(origem) → disco centrado L–R.
   // BACK = quanto a câmera fica ao sul do jogador (jogador sobe na tela).
+  // 0.20 = meio termo: 0 = top-down radial; 0.40 = enquadramento original (jogador alto demais).
   CAM_ALT: 5.5,
-  CAM_ANGULAR_BACK: 0.40,
+  CAM_ANGULAR_BACK: 0.20,
   CAM_ANGULAR_ELEV: 0,
   CAM_LOOK_AHEAD: 0,
   CAM_LOOK_DOWN: 0,
