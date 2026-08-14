@@ -13,7 +13,7 @@ export function sphericalToCartesian(lat, lon, radius = CONFIG.PLANET_RADIUS) {
   return new THREE.Vector3(
     radius * Math.cos(lat) * Math.cos(lon),
     radius * Math.sin(lat),
-    radius * Math.cos(lat) * Math.sin(lon),
+    -radius * Math.cos(lat) * Math.sin(lon),
   );
 }
 
@@ -22,12 +22,12 @@ export function makeSurfaceMatrix(lat, lon) {
   const north = new THREE.Vector3(
     -Math.sin(lat) * Math.cos(lon),
     Math.cos(lat),
-    -Math.sin(lat) * Math.sin(lon),
+    Math.sin(lat) * Math.sin(lon),
   ).normalize();
   const east = new THREE.Vector3(
-    -Math.cos(lat) * Math.sin(lon),
+    -Math.sin(lon),
     0,
-    Math.cos(lat) * Math.cos(lon),
+    -Math.cos(lon),
   ).normalize();
 
   // RH: east × up = north → +X leste, +Y up, +Z norte (frente local = +Z)
@@ -35,6 +35,7 @@ export function makeSurfaceMatrix(lat, lon) {
   matrix.makeBasis(east, up, north);
   return matrix;
 }
+
 
 export function placeOnSurface(object3d, lat, lon, height = 0) {
   const pos = sphericalToCartesian(lat, lon, CONFIG.PLANET_RADIUS + height);
